@@ -9,16 +9,28 @@ import os
 
 alert_txt_file = '/tmp/alert.txt'
 dump_txt_file = '/tmp/dump.txt'
+
+#  Email configuration
 email_to = ''
 email_from = ''
 email_subject = ''
 smtp_server = ''
-search_string = ''
+
+#  Twitter API credentials
 consumer_key = ''
 consumer_secret = ''
 access_token_key = ''
 access_token_secret = ''
+
+#  Twitter account we are following
 twitter_user = 'dumpmon'
+
+#  Search Term(s)
+#  If set to a string, search a single term
+#  If set to a tuple, perform search for multiple terms, e.g.
+#  search_string = 'abc' or
+#  search string = ('term1', 'term2', 'etc',)
+search_string = ''
 
 
 class Dumpmon(object):
@@ -65,9 +77,16 @@ def search_for_text():
     with open(dump_txt_file) as final:
         for line in final:
             if search_string in line:
-                alert.write(line.strip())
+                alert.write(line.strip() + '\n')
     alert.close()
 
+def search_for_text_multiple():
+    alert = open(alert_txt_file, 'w+')
+    with open(dump_txt_file) as final:
+        for line in final:
+            if any(x in line for x in search_string):
+                alert.write(line.strip() + '\n')
+    alert.close()
 
 def send_alert_email():
     alert = open(alert_txt_file, 'r')
@@ -87,7 +106,10 @@ if __name__ == '__main__':
         tweets.get_links()
         remove_old_dump_and_alert_txts()
         scrape_info_from_links()
-        search_for_text()
+        if isinstance(search_string, tuple):
+            search_for_text_multiple()
+        else:
+            search_for_text()
         if os.stat(alert_txt_file).st_size > 0:
             send_alert_email()
     except Exception, e:

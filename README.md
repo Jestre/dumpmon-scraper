@@ -19,7 +19,12 @@ You will need to ensure that both the [Python-Twitter](https://github.com/bear/p
     sudo pip install python-twitter Requests
  
 ###  Configuration
- In addition to the Twitter credentials mentioned previously, you will need to configure some basic email credentials as well as the search terms in the `email_*`, `smtp_server` and `search_string` variables.
+In addition to the Twitter credentials mentioned previously, you will need to configure some basic email 
+credentials as well as the search terms in the `email_*`, `smtp_server` and `search_string` variables.
+
+There is also a `config_file` variable.  If this is set to point to a file writable by the user 
+running this script, the program will attempt to save the ID from the last tweet processed, so that 
+future runs will not result in duplicate alerts.
  
 ### Running
 ./dumpmon-scraper.py

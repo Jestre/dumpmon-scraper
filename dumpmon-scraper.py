@@ -10,6 +10,11 @@ import os
 alert_txt_file = '/tmp/alert.txt'
 dump_txt_file = '/tmp/dump.txt'
 
+#  Save / Config file path (full or relative) and name, e.g.
+#  config_file = '/home/me/misc/dumpmon.cfg'
+config_file = 'dumpmon-scraper.cfg'
+
+
 #  Email configuration
 email_to = ''
 email_from = ''
@@ -39,17 +44,38 @@ class Dumpmon(object):
         self.status = []
         self.links = []
         self.twitter_user = twitter_user
+        self.since_id = self.load()
         self.api = twitter.Api(consumer_key=consumer_key,
                                consumer_secret=consumer_secret,
                                access_token_key=access_token_key,
                                access_token_secret=access_token_secret)
 
     def get_tweets(self):
-        return self.api.GetUserTimeline(screen_name=self.twitter_user)
+        return self.api.GetUserTimeline(screen_name=self.twitter_user, since_id=self.since_id)
 
     def get_links(self):
         for s in self.get_tweets():
             self.links.append(s.text.split(" ")[0])
+            if s.id > self.since_id:
+                self.since_id = s.id
+
+    def load(self):
+        if config_file and os.path.isfile(config_file):
+            try:
+                with open(config_file, 'r') as f:
+                    since_id = int(f.readline().strip())
+            except IOError, e:
+                print "I/O error({0}) reading config file {2}: {1}".format(e.errno, e.strerror, config_file)
+            return since_id
+
+    def save(self):
+        if config_file:
+            try:
+                with open(config_file, 'w+') as f:
+                    f.write(str(self.since_id))
+            except IOError, e:
+                print "I/O error({0}) writing config file {2}: {1}".format(e.errno, e.strerror, config_file)
+
 
 
 def get_link_output(link):
@@ -104,6 +130,7 @@ if __name__ == '__main__':
     try:
         tweets = Dumpmon()
         tweets.get_links()
+        tweets.save()
         remove_old_dump_and_alert_txts()
         scrape_info_from_links()
         if isinstance(search_string, tuple):
